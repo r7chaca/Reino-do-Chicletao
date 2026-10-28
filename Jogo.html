@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Reino do Chicletão 🍬</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hb">
+    <span class="hl">Wave</span>
+    <span class="hv" id="hv-wave">1</span>
+  </div>
+  <div class="hsep"></div>
+  <div class="bw">
+    <div class="bl"><span>🍬 Goma</span><span id="hv-fab-info" style="color:#ffddaa;font-size:7px"></span></div>
+    <div class="bb"><div class="bf" id="bfgoma" style="width:45%"></div></div>
+    <div class="bv"><span id="hv-goma">9</span> / <span id="hv-goma-max">20</span></div>
+  </div>
+  <div class="hsep"></div>
+  <div class="bw">
+    <div class="bl"><span>🍭 HP do Chicletão</span></div>
+    <div class="bb"><div class="bf" id="bfhp" style="width:100%"></div></div>
+    <div class="bv"><span id="hv-hp">100</span> / <span id="hv-hp-max">100</span></div>
+  </div>
+  <div class="hsep"></div>
+  <div class="bw">
+    <div class="bl"><span>☠️ Horda</span></div>
+    <div class="bb"><div class="bf" id="bfwave" style="width:0%"></div></div>
+  </div>
+  <div class="hsep"></div>
+  <div class="hb" id="hv-kills-wrap">
+    <span class="hl">Kills</span>
+    <span class="hv" id="hv-kills" style="color:#ff8844">0</span>
+  </div>
+  <div class="hsep"></div>
+  <div class="hb" id="hv-score-wrap">
+    <span class="hl">Score</span>
+    <span class="hv" id="hv-score" style="color:#44ddff;font-size:13px">0</span>
+  </div>
+  <div class="hsep"></div>
+  <div class="hb">
+    <span class="hl">Estado</span>
+    <span class="hv" id="hv-state" style="font-size:10px;color:#ff4466">PREPARO</span>
+  </div>
+</div>
+
+<!-- ARENA -->
+<div id="arena">
+<div id="stage">
+  <button id="btn-mute" onclick="toggleMute()">🔊 Som</button>
+  <div id="hs-badge">🏆 <span id="hs-val">0</span></div>
+  <button id="btn-pause" disabled onclick="togglePause()">⏸ Pausa</button>
+  <div id="auto-wave">⏳ Wave em <span id="aw-sec">4</span>s
+    <div id="aw-bar"><div id="aw-fill"></div></div>
+  </div>
+  <div id="notif" role="status" aria-live="polite"></div>
+  <div id="tip"></div>
+  <div id="wave-preview"></div>
+  <div id="wave-badge"></div>
+  <div id="event-banner"></div>
+  <div id="spd-bar">
+    <button class="spd-btn spd-active" id="spd-1" onclick="setSpeed(1)">1×</button>
+    <button class="spd-btn" id="spd-2" onclick="setSpeed(2)">2×</button>
+    <button class="spd-btn" id="spd-3" onclick="setSpeed(3)">3×</button>
+  </div>
+  <button id="legend-btn" onclick="toggleLegend()">❓</button>
+  <div id="legend-panel">
+    <b style="color:#ff88aa;font-size:9px;text-transform:uppercase;letter-spacing:1px">Inimigos</b>
+    <div class="le"><span>💀</span><span>Normal — padrão</span></div>
+    <div class="le"><span>🛡️</span><span>Tank — muito HP, lento</span></div>
+    <div class="le"><span>💨</span><span>Fast — pouco HP, rápido</span></div>
+    <div class="le"><span>👹</span><span>Boss — rage a 40% HP</span></div>
+    <div class="le"><span>💊</span><span>Curador — heala aliados</span></div>
+    <div class="le"><span>🏃</span><span>Corredor — ignora tropas</span></div>
+    <div class="le"><span>🪖</span><span>Armado — 1 hit quebra escudo</span></div>
+    <b style="color:#ff88aa;font-size:9px;text-transform:uppercase;letter-spacing:1px;display:block;margin-top:6px">Tropas</b>
+    <div class="le"><span>🎯</span><span>Franqueiro — 20% crítico</span></div>
+    <div class="le"><span>🟤</span><span>Sticky — rastro automático</span></div>
+    <div class="le"><span>🍡</span><span>Blocão — recebe foco</span></div>
+    <div class="le"><span>💚</span><span>Healer — cura vizinhos</span></div>
+    <div class="le"><span>🍬</span><span>Mascador — regen vizinhos</span></div>
+  </div>
+  <button id="btn-wave" onclick="startWave()">⚔️ Invocar Horda</button>
+  <div id="field">
+    <div id="rei-wrap">
+      <div id="rei-label">👑 Chicletão</div>
+      <div id="rei-el">👑</div>
+      <div id="rei-hpbar-bg"><div id="rei-hpbar" style="width:100%"></div></div>
+    </div>
+    <div id="grid"></div>
+  </div>
+</div>
+</div>
+
+<!-- MÃO -->
+<div id="hand-bar">
+  <div id="hand"></div>
+  <button id="btn-discard" type="button" disabled onclick="toggleDiscard()"
+    aria-label="Descartar carta: ganha 3 de goma por carta (tecla D)">
+    <span class="dc-icon">🗑</span>
+    <span class="dc-title">Descartar</span>
+    <span class="dc-gain">+3 🍬</span>
+  </button>
+</div>
+
+<!-- OVERLAY UPGRADE -->
+<div class="overlay" id="ov-upgrade">
+  <h2>✨ Escolha um Power-up</h2>
+  <div id="ov-up-cards"></div>
+</div>
+
+<!-- OVERLAY PAUSA -->
+<div id="ov-pause" style="position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;
+  flex-direction:column;align-items:center;justify-content:center;z-index:28;gap:16px">
+  <h2 style="font-size:28px;color:#ff88aa;letter-spacing:3px;text-transform:uppercase">⏸ Pausa</h2>
+  <p style="font-size:13px;color:#886677">Pressione <b>P</b> para continuar</p>
+  <button class="bbig" onclick="togglePause()">▶ Continuar</button>
+</div>
+
+<!-- OVERLAY ORIENTAÇÃO (celular em pé) -->
+<div id="ov-zoom">
+  <div class="zoom-icon">📱</div>
+  <h2>Gire o celular</h2>
+  <p>O jogo fica bem maior e mais fácil de jogar<br>com o aparelho na horizontal.</p>
+  <button class="bbig" onclick="dismissOrientation()">▶ Jogar assim mesmo</button>
+</div>
+
+<!-- TELA DE TÍTULO -->
+<div id="ov-title">
+  <div class="title-deco">🍬</div>
+  <h1>Reino do Chicletão</h1>
+  <p class="sub">Defenda o Rei com suas tropas de chiclete.<br>Coloque cartas no grid, invoque a horda e sobreviva!</p>
+  <p class="hs-line" id="title-hs"></p>
+  <div class="diff-row">
+    <button class="diff-btn" id="diff-easy"   onclick="setDifficulty('easy')">🟢 Fácil</button>
+    <button class="diff-btn diff-active" id="diff-normal" onclick="setDifficulty('normal')">🟡 Normal</button>
+    <button class="diff-btn" id="diff-hard"   onclick="setDifficulty('hard')">🔴 Difícil</button>
+  </div>
+  <button class="bbig" id="btn-start" style="font-size:16px;padding:14px 36px;margin-top:4px">🍬 Jogar</button>
+</div>
+
+<!-- OVERLAY LOJA -->
+<div id="ov-shop">
+  <h2>🛒 Loja de Goma</h2>
+  <p id="shop-header">Goma disponível: <b><span id="shop-goma">0</span></b> 🍬</p>
+  <div id="shop-items"></div>
+  <span id="shop-skip" onclick="closeShop()">Pular loja →</span>
+</div>
+
+<!-- OVERLAY VITÓRIA -->
+<div id="ov-victory">
+  <div class="vic-crown">👑</div>
+  <h1>Vitória!</h1>
+  <p class="vic-sub">O Reino do Chicletão está salvo! Você derrotou a wave <b id="vic-wave">15</b>.</p>
+  <div class="pg-grid">
+    <div class="pg-card"><div class="pg-label">Score</div><div class="pg-val" id="vic-score">—</div></div>
+    <div class="pg-card"><div class="pg-label">Kills</div><div class="pg-val" id="vic-kills">—</div></div>
+    <div class="pg-card"><div class="pg-label">HP do Rei</div><div class="pg-val" id="vic-hp">—</div></div>
+    <div class="pg-card"><div class="pg-label">Dificuldade</div><div class="pg-val pg-diff" id="vic-diff">—</div></div>
+  </div>
+  <p class="pg-hs">🏆 Vitórias nesta dificuldade: <b id="vic-wins">1</b></p>
+  <div class="vic-btns">
+    <button class="bbig" onclick="continueAfterVictory()">♾ Continuar (modo infinito)</button>
+    <button class="bbig vic-alt" onclick="location.reload()">🔄 Jogar de novo</button>
+  </div>
+</div>
+
+<!-- OVERLAY PÓS-PARTIDA -->
+<div id="ov-postGame">
+  <h1>💀 Derrota!</h1>
+  <div class="pg-grid">
+    <div class="pg-card"><div class="pg-label">Wave</div><div class="pg-val" id="pg-wave">—</div></div>
+    <div class="pg-card"><div class="pg-label">Score</div><div class="pg-val" id="pg-score">—</div></div>
+    <div class="pg-card"><div class="pg-label">Kills</div><div class="pg-val" id="pg-kills">—</div></div>
+    <div class="pg-card"><div class="pg-label">Dificuldade</div><div class="pg-val pg-diff" id="pg-diff">—</div></div>
+  </div>
+  <p class="pg-hs" id="pg-hs"></p>
+  <div id="pg-kills-breakdown"></div>
+  <div class="pg-section">Últimas 5 partidas</div>
+  <div id="run-history"></div>
+  <div class="pg-section">Conquistas</div>
+  <div id="ach-list"></div>
+  <button class="bbig" onclick="location.reload()" style="margin-top:10px">🔄 Tentar novamente</button>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
