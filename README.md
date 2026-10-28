@@ -151,7 +151,7 @@ chico-cletus_game-main/
 
 ## Equipe
 
-Desenvolvido por Raul Pinheiro das Chagas (R7Chaca) e colaboradores — ETEC, 2025.
+Desenvolvido por Raul Pinheiro das Chagas (R7Chaca) e Marcelo Gomes Barbosa — ETEC, 2026.
 
 ---
 
