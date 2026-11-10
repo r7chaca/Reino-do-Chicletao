@@ -114,7 +114,7 @@ const reiHPBar = document.getElementById('rei-hpbar');
 // Escala o palco inteiro para caber na área visível (mantém proporção).
 function fitStage() {
   const w=arenaOuter.clientWidth, h=arenaOuter.clientHeight; if(!w||!h) return;
-  const s=Math.min(2, w/STAGE_W, h/STAGE_H);
+  const s=Math.min(3, w/STAGE_W, h/STAGE_H);
   arena.style.transform='translate(-50%,-50%) scale('+s+')';
 }
 window.addEventListener('resize', fitStage);
@@ -179,7 +179,7 @@ function sfxError()   { playTone(160,'sawtooth',0.08,0.12); }
 function sfxCombo()   { playTone(880,'sine',0.06,0.1); setTimeout(()=>playTone(1100,'sine',0.08,0.12),60); }
 function sfxHealer()  { playTone(600,'sine',0.07,0.12); }
 function sfxEvent()   { [440,550,660].forEach((f,i)=>setTimeout(()=>playTone(f,'sine',0.12,0.2),i*100)); }
-function toggleMute() { muted=!muted; document.getElementById('btn-mute').textContent=muted?'🔇 Mudo':'🔊 Som'; }
+function toggleMute() { muted=!muted; document.getElementById('btn-mute').textContent=muted?'🔇':'🔊'; }
 
 // ═══════════════════════════════════════════
 //  LEGENDA
@@ -278,15 +278,23 @@ function togglePause() {
   if (state==='dead'||state==='prep'||state==='upgrade') return;
   paused = !paused;
   const btn=document.getElementById('btn-pause'), ov=document.getElementById('ov-pause');
-  if (paused) { if(btn) btn.textContent='▶ Resume'; if(ov) ov.style.display='flex'; }
-  else        { if(btn) btn.textContent='⏸ Pausa';  if(ov) ov.style.display='none'; }
+  if (paused) { if(btn) btn.textContent='▶'; if(ov) ov.style.display='flex'; }
+  else        { if(btn) btn.textContent='⏸';  if(ov) ov.style.display='none'; }
 }
 document.addEventListener('keydown', e => {
+  if (e.ctrlKey||e.metaKey||e.altKey) return;
+  if (e.key==='f'||e.key==='F') { e.preventDefault(); toggleFullscreen(); return; }   // funciona até na tela de título
+  if (e.key==='t'||e.key==='T') { e.preventDefault(); togglePresent(); return; }      // T = modo apresentação (telão)
   if (e.key==='p'||e.key==='P'||e.key===' ') { e.preventDefault(); togglePause(); return; }
   if (!gameStarted || paused) return;
+  if (e.key==='c'||e.key==='C') { e.preventDefault(); toggleTray(); return; }
+  if (e.key==='b'||e.key==='B') { e.preventDefault(); toggleTrayAuto(); return; }
   if (e.key==='Enter' && state==='prep') { e.preventDefault(); startWave(); return; }
   if ((e.key==='d'||e.key==='D') && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); toggleDiscard(); return; }
-  if (e.key==='Escape' && discardMode) { setDiscardMode(false); return; }
+  if (e.key==='Escape') {
+    if (discardMode) { setDiscardMode(false); return; }
+    if (sel!==null) { sel=null; handDirty=true; refreshGrid(); hideCellPreview(); if (trayAuto) setTray(true); return; }   // cancela a carta escolhida
+  }
   if (/^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
     const idx = e.key==='0'?9:Number(e.key)-1;   // 1–9 = cartas 1–9, 0 = carta 10
     if (discardMode) discardCard(idx); else selectCard(idx);
@@ -536,9 +544,12 @@ function renderHand() {
     div.setAttribute('aria-label', c.name+', custo '+c.cost+(ok?'':' (goma insuficiente)')+' — tecla '+(i===9?0:i+1)+(discardMode?' — clique para descartar (+'+DISCARD_GOMA+' goma)':''));
     div.addEventListener('pointerdown', ev => { ev.stopPropagation(); if (discardMode) discardCard(i); else selectCard(i); });
     div.addEventListener('keydown', ev => { if (ev.key==='Enter') { ev.preventDefault(); ev.stopPropagation(); if (discardMode) discardCard(i); else selectCard(i); } });
+    div.addEventListener('pointerenter', () => showCardInfo(c));
+    div.addEventListener('focus', () => showCardInfo(c));
     el.appendChild(div);
   });
   el.classList.toggle('discarding', discardMode);
+  showCardInfo(sel!==null ? hand[sel] : null);
   refreshGrid();
 }
 
@@ -554,7 +565,7 @@ function updateHUD() {
   document.getElementById('hv-hp').innerText = Math.max(0,Math.ceil(rei.hp));
   document.getElementById('hv-hp-max').innerText = rei.maxHp;
   document.getElementById('bfhp').style.width = Math.max(0,rei.hp/rei.maxHp*100)+'%';
-  document.getElementById('hv-state').innerText = paused?'PAUSA':state.toUpperCase();
+  document.getElementById('hv-state').innerText = paused?'PAUSA':(STATE_LABEL[state]||state.toUpperCase());
   reiHPBar.style.width = Math.max(0,rei.hp/rei.maxHp*100)+'%';
   reiHPBar.style.background = rei.hp/rei.maxHp>.5?'#ff6688':rei.hp/rei.maxHp>.25?'#ffcc00':'#ff2244';
   if (totalWave>0)
@@ -569,17 +580,39 @@ function updateHUD() {
     db.classList.toggle('active', discardMode);
   }
   if (discardMode && (state!=='prep' || !hand.length)) setDiscardMode(false);
+  // bandeja de cartas: sobe sozinha ao entrar no preparo e some na batalha
+  const tk=(gameStarted?'1':'0')+state;
+  if (tk!==_trayKey) { _trayKey=tk; _trayWant=gameStarted && state==='prep'; if (!_trayWant) setTray(false); }
+  if (_trayWant && gameStarted && state==='prep' && hand.length) { setTray(true); _trayWant=false; }
+  const tb=document.getElementById('btn-tray');
+  if (tb) {
+    const show=gameStarted && state==='prep' && !trayOpen && hand.length>0;
+    tb.style.display=show?'block':'none';
+    if (show) { const t='▲ CARTAS ('+hand.length+')'; if (tb.textContent!==t) tb.textContent=t; }
+  }
+  // faixa "clique numa célula…" quando uma carta está escolhida e a bandeja desceu
+  const sb=document.getElementById('sel-banner');
+  if (sb) {
+    let t='';
+    if (gameStarted && state==='prep' && sel!==null && hand[sel] && !trayOpen) {
+      const c=hand[sel];
+      t = c.type==='sacrifice' ? '💀 Clique numa tropa sua para sacrificar'
+        : '👆 '+c.name+': clique numa célula do grid'+(c.type==='unit' ? ' (ou numa tropa igual para evoluir)' : '');
+    }
+    if (sb._t!==t) { sb._t=t; sb.textContent=t; sb.style.display=t?'block':'none'; }
+  }
   // prévia da próxima wave (só no preparo)
   const pv = state==='prep' && gameStarted ? wavePreviewText() : '';
   if (pv!==_lastPreview) { _lastPreview=pv; const pe=document.getElementById('wave-preview'); if(pe) pe.innerText=pv; }
 }
 let _lastPreview='';
+const STATE_LABEL = { prep:'PREPARO', battle:'BATALHA', upgrade:'POWER-UP', shop:'LOJA', dead:'FIM', victory:'VITÓRIA' };
 
 // DICAS DA PRIMEIRA PARTIDA — aparecem uma vez cada (salvas no localStorage), sem bloquear o jogo
 const TIPS = {
-  start:  '👆 Escolha uma carta da mão e clique numa célula do grid para posicionar a tropa',
+  start:  '👆 Escolha uma carta na bandeja: ela desce e você clica numa célula do grid',
   placed: '⬆️ Cartas iguais sobem de nível (até 3): selecione a carta e clique na tropa igual',
-  wave:   '⌨️ Atalhos: 1–9 escolhem cartas · Enter invoca a horda · P pausa · D descarta',
+  wave:   '⌨️ Atalhos: 1–9 cartas · C bandeja · Enter horda · P pausa · D descarta · T telão · F tela cheia',
   discard:'🗑 Carta que não vai usar? Descarte por +3 goma cada (botão 🗑 ou tecla D)',
 };
 const tipsSeen = new Set((()=>{ const a=lsJSON('chicletao_tips',[]); return Array.isArray(a)?a:[]; })());
@@ -739,8 +772,9 @@ function selectCard(i) {
   if (c.type==='heal'||c.type==='goma') { sel=i; useInstantCard(); return; }
   if (c.type==='sacrifice' && !units.some(u=>u)) { notify('Sem tropas para sacrificar!'); sfxError(); return; }
   sel=(sel===i?null:i); handDirty=true; refreshGrid(); hideCellPreview();
+  if (trayAuto) setTray(sel===null);   // carta escolhida → bandeja desce; escolha cancelada → sobe
 }
-function consume() { hand.splice(sel,1); sel=null; handDirty=true; checkAutoWave(); }
+function consume() { hand.splice(sel,1); sel=null; handDirty=true; if (trayAuto) setTray(true); checkAutoWave(); }
 
 // ═══════════════════════════════════════════
 //  DESCARTE — qualquer carta da mão some e dá +DISCARD_GOMA de goma (independe da carta e do custo)
@@ -752,7 +786,7 @@ const DISCARD_GOMA = 3;
 function setDiscardMode(on) {
   on = !!on && state==='prep' && hand.length>0;
   if (on!==discardMode) { discardMode=on; handDirty=true; }
-  if (on) { sel=null; handDirty=true; refreshGrid(); hideCellPreview(); }
+  if (on) { sel=null; handDirty=true; refreshGrid(); hideCellPreview(); setTray(true); }
 }
 function toggleDiscard() {
   if (!gameStarted || state!=='prep' || paused) return;
@@ -771,8 +805,70 @@ function discardCard(i) {
   const rc=reiCenter();
   spawnFloat(rc.x, rc.y-30, gain>0?'+'+gain+' 🍬':'Goma cheia!', gain>0?'#44ddff':'#ffaa66');
   notify('🗑 '+c.name+' descartada! '+(gain>0?'+'+gain+' 🍬':'(goma já estava cheia)'));
-  sfxDiscard(); refreshGrid(); hideCellPreview(); checkAutoWave();
+  sfxDiscard(); refreshGrid(); hideCellPreview(); setTray(true); checkAutoWave();
 }
+
+// ═══════════════════════════════════════════
+//  BANDEJA DE CARTAS (UI "telão")
+//  No preparo a bandeja sobe cobrindo a parte de baixo do palco, com as cartas grandes. Ao escolher uma carta ela
+//  desce (o grid inteiro fica visível para posicionar) e sobe de novo depois de usar. Na batalha ela some.
+//  "Automática" (tecla B) liga/desliga esse sobe-e-desce; a aba "Fechar" e a tecla C abrem/fecham na mão.
+// ═══════════════════════════════════════════
+let trayOpen=false, trayAuto=(lsGet('chicletao_tray_auto','1')!=='0');
+let _trayKey='', _trayWant=false;
+function setTray(open) {
+  open = !!open && gameStarted && state==='prep' && hand.length>0;
+  if (open===trayOpen) return;
+  trayOpen=open;
+  const t=document.getElementById('tray'); if (t) t.classList.toggle('open', open);
+  if (open) handDirty=true;
+}
+function toggleTray() {
+  if (!gameStarted || state!=='prep') return;
+  setTray(!trayOpen);
+}
+function toggleTrayAuto() {
+  trayAuto=!trayAuto; lsSet('chicletao_tray_auto', trayAuto?'1':'0');
+  syncTrayAutoBtn();
+  notify(trayAuto ? '↻ Bandeja automática: ligada' : '↻ Bandeja automática: desligada (use C ou a aba)');
+}
+function syncTrayAutoBtn() {
+  const b=document.getElementById('tray-auto'); if (!b) return;
+  b.textContent='↻ Automática: '+(trayAuto?'SIM':'NÃO'); b.classList.toggle('off', !trayAuto);
+}
+const RARITY_LABEL = { common:'Comum', rare:'Rara', epic:'Épica', legend:'Lendária' };
+const TYPE_LABEL   = { unit:'Tropa', building:'Construção', sacrifice:'Feitiço', heal:'Feitiço', goma:'Feitiço' };
+function showCardInfo(c) {
+  const el=document.getElementById('card-info'); if (!el) return;
+  if (!c) { el.innerHTML='<div class="in-hint">👆 Passe o mouse (ou toque) numa carta para ver os detalhes.<br><br>Ao escolher uma, a bandeja desce para você posicionar.</div>'; return; }
+  const st = c.type==='unit' ? '<div class="in-stats">⚔️ Dano '+c.dmg+' · ❤️ Vida '+c.hp+'</div>' : '';
+  const ps = (c.type==='unit'&&PASSIVES[c.id]) ? '<div class="in-pass">'+PASSIVES[c.id].tag+' — '+PASSIVES[c.id].desc+'</div>' : '';
+  el.innerHTML='<div class="in-name">'+c.name+'</div>'
+    +'<div class="in-meta"><span class="in-cost">🍬 '+c.cost+'</span><span class="in-tag">'+(TYPE_LABEL[c.type]||'Carta')+' · '+(RARITY_LABEL[c.rarity]||'')+'</span></div>'
+    +st+ps+'<div>'+c.desc+'</div>';
+}
+
+// MODO APRESENTAÇÃO (T): letras e barras maiores + mais contraste, para projetor/telão. TELA CHEIA (F).
+function togglePresent(force) {
+  const on = force!==undefined ? !!force : !document.body.classList.contains('present');
+  document.body.classList.toggle('present', on);
+  const b=document.getElementById('btn-present'); if (b) b.classList.toggle('on', on);
+  lsSet('chicletao_present', on?'1':'0');
+  if (gameStarted) notify(on ? '🖥 Modo apresentação: ligado' : '🖥 Modo apresentação: desligado');
+}
+function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) { const r=document.documentElement.requestFullscreen; if (r) r.call(document.documentElement); }
+    else document.exitFullscreen();
+  } catch(e) {}
+}
+document.addEventListener('fullscreenchange', () => {
+  const b=document.getElementById('btn-full'); if (b) b.classList.toggle('on', !!document.fullscreenElement);
+  fitStage();
+});
+togglePresent(lsGet('chicletao_present','0')==='1');
+syncTrayAutoBtn();
+showCardInfo(null);
 
 // ═══════════════════════════════════════════
 //  WAVE
@@ -1200,7 +1296,7 @@ function checkOrientation() {
     ov.style.display = 'flex';
     if (!orientPaused && state === 'battle' && !paused) {
       paused = true; orientPaused = true;
-      const btn = document.getElementById('btn-pause'); if (btn) btn.textContent = '▶ Resume';
+      const btn = document.getElementById('btn-pause'); if (btn) btn.textContent = '▶';
     }
   } else {
     ov.style.display = 'none';
@@ -1210,7 +1306,7 @@ function checkOrientation() {
 function releaseOrientationPause() {
   if (!orientPaused) return;
   paused = false; orientPaused = false;
-  const btn = document.getElementById('btn-pause'); if (btn) btn.textContent = '⏸ Pausa';
+  const btn = document.getElementById('btn-pause'); if (btn) btn.textContent = '⏸';
 }
 function dismissOrientation() {
   orientDismissed = true;

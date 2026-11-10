@@ -8,68 +8,71 @@
 </head>
 <body>
 
-<!-- HUD -->
-<div id="hud">
-  <div class="hb">
-    <span class="hl">Wave</span>
-    <span class="hv" id="hv-wave">1</span>
-  </div>
-  <div class="hsep"></div>
-  <div class="bw">
-    <div class="bl"><span>🍬 Goma</span><span id="hv-fab-info" style="color:#ffddaa;font-size:7px"></span></div>
-    <div class="bb"><div class="bf" id="bfgoma" style="width:45%"></div></div>
-    <div class="bv"><span id="hv-goma">9</span> / <span id="hv-goma-max">20</span></div>
-  </div>
-  <div class="hsep"></div>
-  <div class="bw">
-    <div class="bl"><span>🍭 HP do Chicletão</span></div>
-    <div class="bb"><div class="bf" id="bfhp" style="width:100%"></div></div>
-    <div class="bv"><span id="hv-hp">100</span> / <span id="hv-hp-max">100</span></div>
-  </div>
-  <div class="hsep"></div>
-  <div class="bw">
-    <div class="bl"><span>☠️ Horda</span></div>
-    <div class="bb"><div class="bf" id="bfwave" style="width:0%"></div></div>
-  </div>
-  <div class="hsep"></div>
-  <div class="hb" id="hv-kills-wrap">
-    <span class="hl">Kills</span>
-    <span class="hv" id="hv-kills" style="color:#ff8844">0</span>
-  </div>
-  <div class="hsep"></div>
-  <div class="hb" id="hv-score-wrap">
-    <span class="hl">Score</span>
-    <span class="hv" id="hv-score" style="color:#44ddff;font-size:13px">0</span>
-  </div>
-  <div class="hsep"></div>
-  <div class="hb">
-    <span class="hl">Estado</span>
-    <span class="hv" id="hv-state" style="font-size:10px;color:#ff4466">PREPARO</span>
-  </div>
-</div>
-
-<!-- ARENA -->
+<!-- ARENA: tudo (HUD, grid, dock e bandeja de cartas) vive dentro do palco 960×540, que é escalado
+     para a tela inteira. Assim as letras crescem junto com a tela — no telão, tudo fica grande. -->
 <div id="arena">
 <div id="stage">
-  <button id="btn-mute" onclick="toggleMute()">🔊 Som</button>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hb">
+      <span class="hl">Wave</span>
+      <span class="hv" id="hv-wave">1</span>
+    </div>
+    <div class="hsep"></div>
+    <div class="bw">
+      <div class="bl"><span>🍬 Goma</span><span id="hv-fab-info"></span></div>
+      <div class="bb"><div class="bf" id="bfgoma" style="width:45%"></div></div>
+      <div class="bv"><span id="hv-goma">9</span> / <span id="hv-goma-max">20</span></div>
+    </div>
+    <div class="hsep"></div>
+    <div class="bw">
+      <div class="bl"><span>🍭 HP do Chicletão</span></div>
+      <div class="bb"><div class="bf" id="bfhp" style="width:100%"></div></div>
+      <div class="bv"><span id="hv-hp">100</span> / <span id="hv-hp-max">100</span></div>
+    </div>
+    <div class="hsep"></div>
+    <div class="bw">
+      <div class="bl"><span>☠️ Horda</span></div>
+      <div class="bb"><div class="bf" id="bfwave" style="width:0%"></div></div>
+    </div>
+    <div class="hsep"></div>
+    <div class="hb" id="hv-kills-wrap">
+      <span class="hl">Kills</span>
+      <span class="hv hv-kills" id="hv-kills">0</span>
+    </div>
+    <div class="hsep"></div>
+    <div class="hb" id="hv-score-wrap">
+      <span class="hl">Score</span>
+      <span class="hv hv-score" id="hv-score">0</span>
+    </div>
+    <div class="hsep"></div>
+    <div class="hb" id="hv-state-wrap">
+      <span class="hl">Fase</span>
+      <span class="hv hv-state" id="hv-state">PREPARO</span>
+    </div>
+    <div class="hsep"></div>
+    <div id="hud-tools">
+      <button id="btn-mute" type="button" onclick="toggleMute()" title="Som" aria-label="Ligar ou desligar o som">🔊</button>
+      <button id="btn-pause" type="button" disabled onclick="togglePause()" title="Pausa (P)" aria-label="Pausar">⏸</button>
+      <button id="legend-btn" type="button" onclick="toggleLegend()" title="Legenda" aria-label="Legenda dos inimigos e tropas">❓</button>
+      <button id="btn-present" type="button" onclick="togglePresent()" title="Modo apresentação (T)" aria-label="Modo apresentação: letras maiores">🖥</button>
+      <button id="btn-full" type="button" onclick="toggleFullscreen()" title="Tela cheia (F)" aria-label="Tela cheia">⛶</button>
+    </div>
+  </div>
+
   <div id="hs-badge">🏆 <span id="hs-val">0</span></div>
-  <button id="btn-pause" disabled onclick="togglePause()">⏸ Pausa</button>
   <div id="auto-wave">⏳ Wave em <span id="aw-sec">4</span>s
     <div id="aw-bar"><div id="aw-fill"></div></div>
   </div>
   <div id="notif" role="status" aria-live="polite"></div>
   <div id="tip"></div>
+  <div id="sel-banner"></div>
   <div id="wave-preview"></div>
   <div id="wave-badge"></div>
   <div id="event-banner"></div>
-  <div id="spd-bar">
-    <button class="spd-btn spd-active" id="spd-1" onclick="setSpeed(1)">1×</button>
-    <button class="spd-btn" id="spd-2" onclick="setSpeed(2)">2×</button>
-    <button class="spd-btn" id="spd-3" onclick="setSpeed(3)">3×</button>
-  </div>
-  <button id="legend-btn" onclick="toggleLegend()">❓</button>
   <div id="legend-panel">
-    <b style="color:#ff88aa;font-size:9px;text-transform:uppercase;letter-spacing:1px">Inimigos</b>
+    <b style="color:#ff88aa;text-transform:uppercase;letter-spacing:1px">Inimigos</b>
     <div class="le"><span>💀</span><span>Normal — padrão</span></div>
     <div class="le"><span>🛡️</span><span>Tank — muito HP, lento</span></div>
     <div class="le"><span>💨</span><span>Fast — pouco HP, rápido</span></div>
@@ -77,14 +80,14 @@
     <div class="le"><span>💊</span><span>Curador — heala aliados</span></div>
     <div class="le"><span>🏃</span><span>Corredor — ignora tropas</span></div>
     <div class="le"><span>🪖</span><span>Armado — 1 hit quebra escudo</span></div>
-    <b style="color:#ff88aa;font-size:9px;text-transform:uppercase;letter-spacing:1px;display:block;margin-top:6px">Tropas</b>
+    <b style="color:#ff88aa;text-transform:uppercase;letter-spacing:1px;display:block;margin-top:6px">Tropas</b>
     <div class="le"><span>🎯</span><span>Franqueiro — 20% crítico</span></div>
     <div class="le"><span>🟤</span><span>Sticky — rastro automático</span></div>
     <div class="le"><span>🍡</span><span>Blocão — recebe foco</span></div>
     <div class="le"><span>💚</span><span>Healer — cura vizinhos</span></div>
     <div class="le"><span>🍬</span><span>Mascador — regen vizinhos</span></div>
   </div>
-  <button id="btn-wave" onclick="startWave()">⚔️ Invocar Horda</button>
+
   <div id="field">
     <div id="rei-wrap">
       <div id="rei-label">👑 Chicletão</div>
@@ -93,18 +96,31 @@
     </div>
     <div id="grid"></div>
   </div>
-</div>
-</div>
 
-<!-- MÃO -->
-<div id="hand-bar">
-  <div id="hand"></div>
-  <button id="btn-discard" type="button" disabled onclick="toggleDiscard()"
-    aria-label="Descartar carta: ganha 3 de goma por carta (tecla D)">
-    <span class="dc-icon">🗑</span>
-    <span class="dc-title">Descartar</span>
-    <span class="dc-gain">+3 🍬</span>
-  </button>
+  <!-- DOCK (rodapé): velocidade · abrir cartas · invocar horda -->
+  <div id="spd-bar">
+    <button class="spd-btn spd-active" id="spd-1" onclick="setSpeed(1)">1×</button>
+    <button class="spd-btn" id="spd-2" onclick="setSpeed(2)">2×</button>
+    <button class="spd-btn" id="spd-3" onclick="setSpeed(3)">3×</button>
+  </div>
+  <button id="btn-tray" type="button" onclick="toggleTray()">▲ CARTAS</button>
+  <button id="btn-wave" onclick="startWave()">⚔️ Invocar Horda</button>
+
+  <!-- BANDEJA DE CARTAS: sobe no preparo, desce ao escolher uma carta (ou com a aba / tecla C) -->
+  <div id="tray" aria-label="Cartas na mão">
+    <button id="tray-tab" type="button" onclick="toggleTray()">▼ Fechar</button>
+    <button id="tray-auto" type="button" onclick="toggleTrayAuto()" title="Abrir e fechar a bandeja sozinha (tecla B)">↻ Automática: SIM</button>
+    <div id="card-info"></div>
+    <div id="hand"></div>
+    <button id="btn-discard" type="button" disabled onclick="toggleDiscard()"
+      aria-label="Descartar carta: ganha 3 de goma por carta (tecla D)">
+      <span class="dc-icon">🗑</span>
+      <span class="dc-title">Descartar</span>
+      <span class="dc-gain">+3 🍬</span>
+    </button>
+  </div>
+
+</div>
 </div>
 
 <!-- OVERLAY UPGRADE -->

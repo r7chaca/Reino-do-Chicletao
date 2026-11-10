@@ -37,7 +37,11 @@ A arena escala automaticamente para qualquer tamanho de janela, zoom do navegado
 
 | Ação | Controle |
 |---|---|
-| Selecionar carta | Clique na carta da mão, ou teclas **1–9** (e **0** para a 10ª carta) |
+| Selecionar carta | Clique na carta da **bandeja**, ou teclas **1–9** (e **0** para a 10ª carta). **Esc** cancela a escolha |
+| Abrir/fechar a bandeja de cartas | Botão **▲ CARTAS** / aba **▼ Fechar**, ou tecla **C** |
+| Bandeja automática (liga/desliga) | Botão **↻ Automática** na bandeja, ou tecla **B** |
+| Modo apresentação (letras maiores) | Botão **🖥** ou tecla **T** |
+| Tela cheia | Botão **⛶** ou tecla **F** |
 | Posicionar tropa | Clique numa célula do grid |
 | Fazer upgrade de tropa | Clique na célula com a mesma carta |
 | Iniciar wave | Botão **Invocar Horda** ou **Enter** |
@@ -45,6 +49,15 @@ A arena escala automaticamente para qualquer tamanho de janela, zoom do navegado
 | Usar Derretimento | Selecione a carta e clique na **tropa** que quer sacrificar |
 | Descartar carta (+3 goma) | Botão **🗑 Descartar** ou tecla **D** — com uma carta selecionada, descarta ela na hora; sem seleção, liga o *modo descarte* (clique nas cartas ou teclas **1–0**; **Esc** sai) |
 | Pausar | **P** ou **Espaço** |
+
+### Interface para telão (v5)
+
+Tudo (HUD, grid, botões e cartas) fica dentro de um palco 960×540 escalado para a tela inteira, então as letras crescem junto com o projetor (as letras do HUD e das cartas têm de 10 a 24 px lógicos, e o palco é ampliado até ~1,8× num telão 1080p; no modo apresentação crescem mais 22%).
+
+- **Bandeja de cartas:** sobe sozinha no preparo, com cartas grandes e um painel de detalhes (nome, custo, dano, vida, passiva). Ao escolher uma carta ela **desce** para mostrar o grid inteiro, e **sobe de novo** depois de usar. Na batalha ela some e a tela fica limpa.
+- **Descarte:** é um espaço do tamanho de uma carta dentro da bandeja.
+- **Modo apresentação (T):** letras e barras ainda maiores e mais contraste. A escolha fica salva.
+- **HUD no topo:** wave, goma, HP, horda, kills, score e fase, mais os botões de som, pausa, legenda, apresentação e tela cheia.
 
 ---
 
