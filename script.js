@@ -111,15 +111,29 @@ const gridEl   = document.getElementById('grid');
 const reiEl    = document.getElementById('rei-el');
 const reiHPBar = document.getElementById('rei-hpbar');
 
-// Escala o palco inteiro para caber na área visível (mantém proporção).
+// Escala o palco inteiro conforme o modo de exibição.
 function fitStage() {
-  const w=arenaOuter.clientWidth, h=arenaOuter.clientHeight; if(!w||!h) return;
-  const s=Math.min(3, w/STAGE_W, h/STAGE_H);
-  arena.style.transform='translate(-50%,-50%) scale('+s+')';
+  const w = arenaOuter.clientWidth;
+  const h = arenaOuter.clientHeight;
+
+  if (!w || !h) return;
+
+  // Normal: 85%. Apresentação: 100%.
+  const SCALE = document.body.classList.contains('present') ? 1 : 0.85;
+
+  const s = Math.min(3, w / STAGE_W, h / STAGE_H) * SCALE;
+
+  arena.style.transform =
+    'translate(-50%, -50%) scale(' + s + ')';
 }
 window.addEventListener('resize', fitStage);
 window.addEventListener('orientationchange', fitStage);
-if (window.ResizeObserver) new ResizeObserver(fitStage).observe(arenaOuter);
+
+if (window.ResizeObserver) {
+  new ResizeObserver(fitStage).observe(arenaOuter);
+}
+
+// Aplica a escala inicial conforme o modo salvo.
 fitStage();
 
 // Todas as coordenadas do jogo são do PALCO (px lógicos). offsetLeft/Top ignoram o scale do CSS,
@@ -849,12 +863,27 @@ function showCardInfo(c) {
 }
 
 // MODO APRESENTAÇÃO (T): letras e barras maiores + mais contraste, para projetor/telão. TELA CHEIA (F).
+// MODO APRESENTAÇÃO (T): letras e barras maiores + mais contraste.
 function togglePresent(force) {
-  const on = force!==undefined ? !!force : !document.body.classList.contains('present');
+  const on = force !== undefined
+    ? !!force
+    : !document.body.classList.contains('present');
+
   document.body.classList.toggle('present', on);
-  const b=document.getElementById('btn-present'); if (b) b.classList.toggle('on', on);
-  lsSet('chicletao_present', on?'1':'0');
-  if (gameStarted) notify(on ? '🖥 Modo apresentação: ligado' : '🖥 Modo apresentação: desligado');
+
+  // Atualiza imediatamente a escala do palco.
+  fitStage();
+
+  const b = document.getElementById('btn-present');
+  if (b) b.classList.toggle('on', on);
+
+  lsSet('chicletao_present', on ? '1' : '0');
+
+  if (gameStarted) {
+    notify(on
+      ? 'Modo apresentação: ligado'
+      : 'Modo apresentação: desligado');
+  }
 }
 function toggleFullscreen() {
   try {
